@@ -60,7 +60,7 @@ describe('Text input fields test suite', () => {
     // (Adjust according to the actual logic of your test)
     expect(await field1.getText()).toEqual('Sample text for field 1');
     expect(await field2.getText()).toEqual('Sample text for field 2');
-
+    expect(await field2.getText()).toEqual('Sample text for field 2');
     // Add any additional assertions or interactions as needed
   });
 
