@@ -15,19 +15,6 @@ const wdOpts = {
   capabilities,
 };
 
-async function runTest() {
-  const driver = await remote(wdOpts);
-  try {
-    const batteryItem = await driver.$('//*[@text="Battery"]');
-    await batteryItem.click();
-  } finally {
-    await driver.pause(10000);
-    await driver.deleteSession();
-  }
-}
-
-// Before and after hooks to set up and tear down the Appium session
-
 
 describe('Text Field Input Form Validation Tests', () => {
   let client;
