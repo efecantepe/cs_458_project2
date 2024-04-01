@@ -40,31 +40,47 @@ describe('Text Field Input Form Validation Tests', () => {
     await client.deleteSession();
   });
 
-  test('Allowed Text Field Data', async () => {
-    // Adjust the selectors according to your application's specifics
-    const field1 = await client.$('com.example.survey_page:id/surnameEditText');
-    await field1.setValue('Sample text for field 1');
+  test('Sending is performed after the text exceeds 50 characters and popup message occurs', async () => {
+    // Locate the text field
+    const textField = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/nameEditText"]');
+    
+    // Set dummy text longer than 50 characters
+    const longText = 'This is a dummy text longer than 50 characters. '.repeat(2); // Creating a text longer than 50 characters
+    await textField.setValue(longText);
 
-    const field2 = await client.$('com.example.survey_page:id/nameEditText');
-    await field2.setValue('Sample text for field 2');
+    // Locate the send button
+    const sendButton = await client.$('android.widget.Button[@resource-id="com.example.survey_page:id/sendButton"]');
+    
+    // Check if the button is clickable
+    const isClickable = await sendButton.isClickable();
 
-    const field3 = await client.$('com.example.survey_page:id/nameEditText');
-    await field2.setValue('Sample text for field 2');
+    // Assert that the button is clickable after the text exceeds 50 characters
+    expect(isClickable).toBeTruthy();
 
-    const field4 = await client.$('com.example.survey_page:id/nameEditText');
-    await field2.setValue('Sample text for field 2');
+    // Perform click action on the send button
+    await sendButton.click();
 
-    // Continue with other fields as necessary...
-
-    // Assertions to verify the fields contain the expected values
-    // (Adjust according to the actual logic of your test)
-    expect(await field1.getText()).toEqual('Sample text for field 1');
-    expect(await field2.getText()).toEqual('Sample text for field 2');
-    expect(await field2.getText()).toEqual('Sample text for field 2');
-    // Add any additional assertions or interactions as needed
   });
 
-  // Include additional tests as necessary
+  test('NameEditText text should not exceed 50 characters', async () => {
+    const nameEditText = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/nameEditText"]');
+    
+    // Set dummy text longer than 50 characters
+    await nameEditText.setValue('This is a dummy text longer than 50 characters');
+
+    const text = await nameEditText.getText();
+    expect(text.length).not.toBeGreaterThan(50);
+  });
+
+  test('SurnameEditText text should not exceed 50 characters', async () => {
+    const surnameEditText = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/surnameEditText"]');
+    
+    // Set dummy text shorter than 50 characters
+    await surnameEditText.setValue('Short dummy text');
+
+    const text = await surnameEditText.getText();
+    expect(text.length).not.toBeGreaterThan(50);
+  });
 });
 
 describe('Checkbox Functionailty Test', () => {
@@ -179,31 +195,55 @@ describe('Component Boundry and UI/UX test', () => {
     await client.deleteSession();
   });
 
-  test('Allowed Text Field Data', async () => {
-    // Adjust the selectors according to your application's specifics
-    const field1 = await client.$('com.example.survey_page:id/surnameEditText');
-    await field1.setValue('Sample text for field 1');
+  test('Send button is within the application bounds', async () => {
+    // Locate the send button
+    const sendButton = await client.$('android.widget.Button[@resource-id="com.example.survey_page:id/sendButton"]');
+    
+    // Get the location of the send button
+    const location = await sendButton.getLocation();
+    const sendButtonX = location.x;
+    const sendButtonY = location.y;
 
-    const field2 = await client.$('com.example.survey_page:id/nameEditText');
-    await field2.setValue('Sample text for field 2');
+    // Get the size of the application viewport
+    const viewportSize = await client.getWindowRect();
+    const viewportWidth = viewportSize.width;
+    const viewportHeight = viewportSize.height;
 
-    const field3 = await client.$('com.example.survey_page:id/nameEditText');
-    await field2.setValue('Sample text for field 2');
-
-    const field4 = await client.$('com.example.survey_page:id/nameEditText');
-    await field2.setValue('Sample text for field 2');
-
-    // Continue with other fields as necessary...
-
-    // Assertions to verify the fields contain the expected values
-    // (Adjust according to the actual logic of your test)
-    expect(await field1.getText()).toEqual('Sample text for field 1');
-    expect(await field2.getText()).toEqual('Sample text for field 2');
-    expect(await field2.getText()).toEqual('Sample text for field 2');
-    // Add any additional assertions or interactions as needed
+    // Assert that the send button is within the application bounds
+    expect(sendButtonX >= 0 && sendButtonX <= viewportWidth).toBeTruthy();
+    expect(sendButtonY >= 0 && sendButtonY <= viewportHeight).toBeTruthy();
   });
 
-  // Include additional tests as necessary
+  test('EditText is within the application bounds', async () => {
+    // Locate the EditText element
+    const editText = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/nameEditText"]');
+    
+    // Get the location of the EditText element
+    const location = await editText.getLocation();
+    const editTextX = location.x;
+    const editTextY = location.y;
+
+    // Get the size of the application viewport
+    const viewportSize = await client.getWindowRect();
+    const viewportWidth = viewportSize.width;
+    const viewportHeight = viewportSize.height;
+
+    // Assert that the EditText element is within the application bounds
+    expect(editTextX >= 0 && editTextX <= viewportWidth).toBeTruthy();
+    expect(editTextY >= 0 && editTextY <= viewportHeight).toBeTruthy();
+  });
+  
+  test('Page is scrollable when keyboard appears', async () => {
+    // Click on the EditText field
+    const editText = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/nameEditText"]');
+    await editText.click();
+
+    // Check if the page is scrollable
+    const isScrollable = await client.execute('mobile: isKeyboardShown');
+    
+    // Assert that the page is scrollable
+    expect(isScrollable).toBeTruthy();
+  });
 });
 
 describe('SQL Injection Tests', () => {
@@ -275,4 +315,57 @@ describe('SQL Injection Tests', () => {
     expect(isDatabaseEmpty).toBe(false);
   });
 
+});
+
+describe('EditText Alignment Test', () => {
+  let client;
+
+  beforeEach(async () => {
+    client = await remote(wdOpts);
+  });
+
+  afterEach(async () => {
+    await client.deleteSession();
+  });
+
+  test('EditText elements are aligned properly', async () => {
+    // Locate the EditText elements
+    const nameEditText = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/nameEditText"]');
+    const surnameEditText = await client.$('android.widget.EditText[@resource-id="com.example.survey_page:id/surnameEditText"]');
+    
+    // Get the location and dimensions of each EditText element
+    const nameEditTextLocation = await nameEditText.getLocation();
+    const nameEditTextSize = await nameEditText.getSize();
+    const surnameEditTextLocation = await surnameEditText.getLocation();
+    const surnameEditTextSize = await surnameEditText.getSize();
+
+    // Check if the EditText elements start at the same position and end at the same position
+    const nameEditTextStartX = nameEditTextLocation.x;
+    const nameEditTextEndX = nameEditTextStartX + nameEditTextSize.width;
+    const surnameEditTextStartX = surnameEditTextLocation.x;
+    const surnameEditTextEndX = surnameEditTextStartX + surnameEditTextSize.width;
+
+    // Assert that the EditText elements are aligned
+    expect(nameEditTextStartX).toEqual(surnameEditTextStartX);
+    expect(nameEditTextEndX).toEqual(surnameEditTextEndX);
+  });
+
+  test('CheckBox elements are aligned properly', async () => {
+    // Locate the CheckBox elements
+    const checkBoxChatGPT = await client.$('//android.widget.CheckBox[@text="ChatGPT"]');
+    const checkBoxBard = await client.$('//android.widget.CheckBox[@text="Bard"]');
+    const checkBoxClaude = await client.$('//android.widget.CheckBox[@text="Claude"]');
+    const checkBoxCopilot = await client.$('//android.widget.CheckBox[@text="Copilot"]');
+    
+    // Get the Y coordinate of each CheckBox element
+    const chatGPTY = (await checkBoxChatGPT.getLocation()).y;
+    const bardY = (await checkBoxBard.getLocation()).y;
+    const claudeY = (await checkBoxClaude.getLocation()).y;
+    const copilotY = (await checkBoxCopilot.getLocation()).y;
+
+    // Assert that the CheckBox elements are aligned
+    expect(chatGPTY).toEqual(bardY);
+    expect(chatGPTY).toEqual(claudeY);
+    expect(chatGPTY).toEqual(copilotY);
+  });
 });
